@@ -1,0 +1,22 @@
+const express = require("express");
+const authController = require("../controllers/authController");
+const userController = require("../controllers/userController");
+
+const router = express.Router();
+
+router.route("/");
+
+router.post("/signup", authController.signup);
+router.post("/login", authController.login);
+
+router.get("/all", authController.protect, userController.allAccess);
+router.get(
+  "/admin",
+  authController.protect,
+//   authController.restrictTo("admin"),
+  userController.adminBoard
+);
+router.get("/mod", userController.modBoard);
+router.get("/user", userController.userBoard);
+
+module.exports = router;
