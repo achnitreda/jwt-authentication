@@ -1,32 +1,36 @@
-require('dotenv').config()
-const express = require('express')
-const mongoose = require('mongoose')
-const app = express()
-const dbConfig = require('./config/db.config')
-require('./models');
+const mongoose = require("mongoose");
+const dotenv = require("dotenv").config();
 
+process.on("uncaughtException", (err) => {
+  console.log("UNCAUGHT EXCEPTION! Shutting down...");
+  console.log(err.name, err.message);
+  process.exit(1);
+});
 
-app.get('/', (req, res) => {
-    res.json(test)
-})
+const app = require("./app");
 
-// --------------- connect mongodb with mongoose
-const mongoAtlasUri =
-  `mongodb+srv://reda42:${dbConfig.pass}@cluster0.dqn8fht.mongodb.net/${dbConfig.db}?retryWrites=true&w=majority`;
+// Connect mongoose with mongodb Atlas
+const db = `mongodb+srv://reda42:${process.env.DATABASE_PASS}@cluster0.dqn8fht.mongodb.net/jwt?retryWrites=true&w=majority`;
+mongoose
+  .connect(db, {
+    useNewUrlParser: true,
+  })
+  .then(() => console.log("MongoDB connected..."));
+// .catch((err) => console.log(err));
 
-try {
-  // Connect to the MongoDB cluster
-  mongoose.connect(
-    mongoAtlasUri,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    () => console.log(" Mongoose is connected"),
-  );
-} catch (e) {
-  console.log("could not connect");
-}
+const port = process.env.PORT || 8000;
+const server = app.listen(port, () => {
+  console.log(`App running on port ${port}...`);
+});
 
-const dbConnection = mongoose.connection;
-dbConnection.on("error", (err) => console.log(`Connection error ${err}`));
-dbConnection.once("open", () => console.log("Connected to DB!"));
-
-app.listen(process.env.PORT)
+// handle unhandled rejected promises
+/* A global process object that is available in all modules. It is an instance of EventEmitter. It is
+used to handle the events that are emitted by the Node.js process itself. */
+process.on("unhandledRejection", (err) => {
+  console.log(err.name, err.message);
+  console.log("UNHANDLED REJECTION Shut Down ...");
+  /* Closing the server after request are completed. */
+  server.close(() => {
+    process.exit(1);
+  });
+});
