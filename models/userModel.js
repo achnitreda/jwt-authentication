@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bycrpt = require("bcryptjs");
@@ -15,11 +16,11 @@ const userSchema = new mongoose.Schema({
     lowercase: true /* transform email to lowercase. */,
     validate: [validator.isEmail, "Please enter a valid email"],
   },
-  // role: {
-  //   type: String,
-  //   enum: ['user', 'guide', 'lead-guide', 'admin'],
-  //   default: 'user'
-  // },
+  role: {
+    type: String,
+    enum: ['user', 'mod', 'admin'],
+    default : 'user'
+  },
   password: {
     type: String,
     required: [true, "Please enter your password"],
@@ -38,6 +39,8 @@ const userSchema = new mongoose.Schema({
       message: "Passwords are not the same",
     },
   },
+  passwordResetToken: String,
+  passwordResetExpires: Date
 });
 
 /* The above code is a pre-save hook. It is a function that runs before a document is saved to the
@@ -57,6 +60,21 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.correctPass = async function (cadidatePass, userPass) {
   return await bycrpt.compare(cadidatePass, userPass);
 };
+
+userSchema.methods.createPassResetToken = function() {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  console.log({ resetToken }, this.passwordResetToken);
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
+}
 
 const User = mongoose.model("User", userSchema);
 
