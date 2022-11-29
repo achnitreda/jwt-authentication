@@ -13,6 +13,9 @@ router.get('/logout', authController.logout);
 router.post("/forgotPassword", authController.forgotPassword);
 router.patch("/resetPassword/:token", authController.resetPassword);
 
+// api/auth/confirm/:token 
+// router.get("/confirm/:token", authController.verifyEmail);
+
 router.get("/all", authController.protect, userController.allAccess);
 router.get(
   "/admin",
